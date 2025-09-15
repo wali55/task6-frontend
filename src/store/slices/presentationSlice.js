@@ -43,11 +43,46 @@ export const createPresentation = createAsyncThunk(
   }
 );
 
+export const deleteSlide = createAsyncThunk(
+  "presentation/deleteSlide",
+  async ({ presentationId, slideId, userId }, { rejectWithValue }) => {
+    try {
+      await api.delete(`/slides/${presentationId}/slides/${slideId}`, {
+        data: { userId }
+      });
+      return { slideId };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to delete slide"
+      );
+    }
+  }
+);
+
+export const changeUserRole = createAsyncThunk(
+  "presentation/changeUserRole",
+  async ({ presentationId, targetUserId, role, userId }, { rejectWithValue }) => {
+    try {
+      const res = await api.put(`/presentations/${presentationId}/users/${targetUserId}/role`, {
+        userId,
+        role
+      });
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to change role"
+      );
+    }
+  }
+);
+
 const presentationSlice = createSlice({
   name: "presentation",
   initialState: {
     currentPresentation: null,
     activeUsers: [],
+    slides: [],
+    selectedSlide: null,
     isConnected: false,
     presentations: [],
     loading: false,
@@ -64,6 +99,12 @@ const presentationSlice = createSlice({
     setActiveUsers: (state, action) => {
       state.activeUsers = action.payload;
     },
+    setSlides: (state, action) => {
+      state.slides = action.payload;
+    },
+    setSelectedSlide: (state, action) => {
+      state.selectedSlide = action.payload;
+    },
     setConnected: (state, action) => {
       state.isConnected = action.payload;
     },
@@ -76,6 +117,21 @@ const presentationSlice = createSlice({
     userLeftPresentation: (state, action) => {
       state.activeUsers = action.payload.activeUsers;
     },
+    slideAdded: (state, action) => {
+      state.slides.push(action.payload);
+    },
+    slideDeleted: (state, action) => {
+      state.slides = state.slides.filter(slide => slide.id !== action.payload.slideId);
+      if (state.selectedSlide?.id === action.payload.slideId) {
+        state.selectedSlide = state.slides[0] || null;
+      }
+    },
+    roleChanged: (state, action) => {
+      const user = state.activeUsers.find(u => u.userId === action.payload.userId);
+      if (user) {
+        user.role = action.payload.role;
+      }
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -91,41 +147,37 @@ const presentationSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(fetchSinglePresentation.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(fetchSinglePresentation.fulfilled, (state, action) => {
-        state.loading = false;
         state.currentPresentation = action.payload;
-      })
-      .addCase(fetchSinglePresentation.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      .addCase(createPresentation.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.slides = action.payload.slides || [];
+        state.selectedSlide = action.payload.slides?.[0] || null;
       })
       .addCase(createPresentation.fulfilled, (state, action) => {
-        state.loading = false;
         state.presentations.push(action.payload);
+        state.showCreateForm = false;
       })
-      .addCase(createPresentation.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+      .addCase(deleteSlide.fulfilled, (state, action) => {
+        state.slides = state.slides.filter(slide => slide.id !== action.payload.slideId);
+        if (state.selectedSlide?.id === action.payload.slideId) {
+          state.selectedSlide = state.slides[0] || null;
+        }
       });
-  },
+  }
 });
 
 export const {
   setCurrentPresentation,
+  setShowCreateForm,
   setActiveUsers,
+  setSlides,
+  setSelectedSlide,
   setConnected,
   userJoined,
   userLeft,
-  setShowCreateForm,
-  userLeftPresentation
+  userLeftPresentation,
+  slideAdded,
+  slideDeleted,
+  roleChanged
 } = presentationSlice.actions;
 
 export default presentationSlice.reducer;

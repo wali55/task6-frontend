@@ -1,10 +1,8 @@
 import { useSelector } from "react-redux";
 import { Outlet, useNavigate } from "react-router-dom";
-import { useSocket } from "../hooks/useSocket";
 
-const Layout = () => {
+const Layout = ({leavePresentation}) => {
   const navigate = useNavigate();
-  const { leavePresentation } = useSocket();
   const {userId} = useSelector((state) => state.user);
   const {currentPresentation} = useSelector((state) => state.presentation);
 

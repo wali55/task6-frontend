@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useSocket } from "../hooks/useSocket";
 import LoadingSpinner from "./LoadingSpinner";
 import {
   createPresentation,
@@ -15,7 +14,7 @@ const PresentationsList = () => {
   const { presentations, loading, showCreateForm } = useSelector(
     (state) => state.presentation
   );
-  const { joinPresentation } = useSocket();
+
   const dispatch = useDispatch();
   const { nickname, userId } = useSelector((state) => state.user);
   const navigate = useNavigate();
@@ -46,7 +45,6 @@ const PresentationsList = () => {
   const handleJoin = (presentation) => {
     if (!nickname || !userId) return;
     dispatch(setCurrentPresentation(presentation));
-    joinPresentation(presentation.id, userId, nickname);
     navigate(`/presentations/${presentation?.id}`);
   };
 
