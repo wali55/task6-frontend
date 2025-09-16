@@ -25,7 +25,7 @@ const SlideEditor = ({ addTextBlock, updateTextBlock, moveTextBlock, deleteTextB
 
     if (e.detail === 2) {
       const rect = slideRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left - 100; // Center the block
+      const x = e.clientX - rect.left - 100; 
       const y = e.clientY - rect.top - 50;
 
       const newTextBlock = {
@@ -38,7 +38,7 @@ const SlideEditor = ({ addTextBlock, updateTextBlock, moveTextBlock, deleteTextB
       };
 
       if (currentPresentation) {
-        addTextBlock(currentPresentation.id, slide.id, newTextBlock);
+        addTextBlock(currentPresentation.id, slide?.id, newTextBlock);
       }
     }
   };

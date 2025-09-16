@@ -97,6 +97,8 @@ const presentationSlice = createSlice({
     currentSlideIndex: 0,
     selectedTextBlock: null,
     isDragging: false,
+    isPresentMode: false,
+    currentSlideId: null,
   },
   reducers: {
     setCurrentPresentation: (state, action) => {
@@ -237,6 +239,22 @@ const presentationSlice = createSlice({
     setDragging: (state, action) => {
       state.isDragging = action.payload;
     },
+    presentationStarted: (state, action) => {
+      state.isPresentMode = true;
+      state.currentSlideId = action.payload.currentSlideId;
+    },
+    presentationEnded: (state) => {
+      state.isPresentMode = false;
+      state.currentSlideId = null;
+    },
+    slideNavigated: (state, action) => {
+      state.currentSlideId = action.payload.currentSlideId;
+    },
+    setPresentationState: (state, action) => {
+      const { presentation } = action.payload;
+      state.isPresentMode = presentation.isPresentMode || false;
+      state.currentSlideId = presentation.currentSlideId || null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -292,6 +310,10 @@ export const {
   textBlockMoved,
   setSelectedTextBlock,
   setDragging,
+  presentationStarted,
+  presentationEnded,
+  slideNavigated,
+  setPresentationState,
 } = presentationSlice.actions;
 
 export default presentationSlice.reducer;

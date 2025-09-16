@@ -10,7 +10,7 @@ import { useSocket } from "./hooks/useSocket";
 import Layout from "./components/Layout";
 
 function App() {
-  const { leavePresentation, joinPresentation, addSlideSocket, deleteSlideSocket, changeUserRoleSocket, addTextBlock, updateTextBlock, moveTextBlock, deleteTextBlock } = useSocket();
+  const { leavePresentation, joinPresentation, addSlideSocket, deleteSlideSocket, changeUserRoleSocket, addTextBlock, updateTextBlock, moveTextBlock, deleteTextBlock, startPresentation, endPresentation, navigateSlide } = useSocket();
 
   return (
     <Router>
@@ -18,7 +18,7 @@ function App() {
         <Route path="/" element={<NicknameEntry />} />
         <Route path="/presentations" element={<Layout leavePresentation={leavePresentation} />}>
           <Route index element={<PresentationsList />} />
-          <Route path=":id" element={<PresentationView joinPresentation={joinPresentation} leavePresentation={leavePresentation} addSlideSocket={addSlideSocket} deleteSlideSocket={deleteSlideSocket} changeUserRoleSocket={changeUserRoleSocket} addTextBlock={addTextBlock} updateTextBlock={updateTextBlock} moveTextBlock={moveTextBlock} deleteTextBlock={deleteTextBlock} />} />
+          <Route path=":id" element={<PresentationView joinPresentation={joinPresentation} leavePresentation={leavePresentation} addSlideSocket={addSlideSocket} deleteSlideSocket={deleteSlideSocket} changeUserRoleSocket={changeUserRoleSocket} addTextBlock={addTextBlock} updateTextBlock={updateTextBlock} moveTextBlock={moveTextBlock} deleteTextBlock={deleteTextBlock} startPresentation={startPresentation} endPresentation={endPresentation} navigateSlide={navigateSlide} />} />
         </Route>
       </Routes>
     </Router>

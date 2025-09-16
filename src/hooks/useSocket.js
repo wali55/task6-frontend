@@ -12,6 +12,10 @@ import {
   textBlockUpdated,
   textBlockDeleted,
   textBlockMoved,
+  presentationStarted,
+  presentationEnded,
+  slideNavigated,
+  setPresentationState,
 } from "../store/slices/presentationSlice";
 import { initSocket } from "../utils/socket";
 
@@ -35,6 +39,12 @@ export const useSocket = () => {
     const handleTextBlockUpdated = (data) => dispatch(textBlockUpdated(data));
     const handleTextBlockDeleted = (data) => dispatch(textBlockDeleted(data));
     const handleTextBlockMoved = (data) => dispatch(textBlockMoved(data));
+    const handlePresentationStarted = (data) =>
+      dispatch(presentationStarted(data));
+    const handlePresentationEnded = () => dispatch(presentationEnded());
+    const handleSlideNavigated = (data) => dispatch(slideNavigated(data));
+    const handlePresentationState = (data) =>
+      dispatch(setPresentationState(data));
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
@@ -48,6 +58,10 @@ export const useSocket = () => {
     socket.on("text-block-updated", handleTextBlockUpdated);
     socket.on("text-block-deleted", handleTextBlockDeleted);
     socket.on("text-block-moved", handleTextBlockMoved);
+    socket.on("presentation-started", handlePresentationStarted);
+    socket.on("presentation-ended", handlePresentationEnded);
+    socket.on("slide-navigated", handleSlideNavigated);
+    socket.on("presentation-state", handlePresentationState);
 
     return () => {
       socket.off("connect", handleConnect);
@@ -62,6 +76,10 @@ export const useSocket = () => {
       socket.off("text-block-updated", handleTextBlockUpdated);
       socket.off("text-block-deleted", handleTextBlockDeleted);
       socket.off("text-block-moved", handleTextBlockMoved);
+      socket.off("presentation-started", handlePresentationStarted);
+      socket.off("presentation-ended", handlePresentationEnded);
+      socket.off("slide-navigated", handleSlideNavigated);
+      socket.off("presentation-state", handlePresentationState);
     };
   }, [dispatch]);
 
@@ -141,6 +159,27 @@ export const useSocket = () => {
     [socket]
   );
 
+  const startPresentation = useCallback(
+    (presentationId, userId) => {
+      socket?.emit("start-presentation", { presentationId, userId });
+    },
+    [socket]
+  );
+
+  const endPresentation = useCallback(
+    (presentationId, userId) => {
+      socket?.emit("end-presentation", { presentationId, userId });
+    },
+    [socket]
+  );
+
+  const navigateSlide = useCallback(
+    (presentationId, slideId, userId) => {
+      socket?.emit("navigate-slide", { presentationId, slideId, userId });
+    },
+    [socket]
+  );
+
   return {
     socket,
     joinPresentation,
@@ -152,5 +191,8 @@ export const useSocket = () => {
     updateTextBlock,
     deleteTextBlock,
     moveTextBlock,
+    startPresentation,
+    endPresentation,
+    navigateSlide,
   };
 };
