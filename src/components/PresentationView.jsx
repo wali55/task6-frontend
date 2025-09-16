@@ -3,10 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchSinglePresentation } from '../store/slices/presentationSlice';
 import SlidesPanel from '../components/SlidesPanel';
-import SlideWorkspace from '../components/SlideWorkspace';
 import UsersPanel from '../components/UsersPanel';
+import SlideEditor from './SlideEditor';
 
-const PresentationView = ({joinPresentation, leavePresentation, addSlideSocket, deleteSlideSocket, changeUserRoleSocket}) => {
+const PresentationView = ({joinPresentation, leavePresentation, addSlideSocket, deleteSlideSocket, changeUserRoleSocket, addTextBlock, updateTextBlock, moveTextBlock, deleteTextBlock}) => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { currentPresentation, loading, error } = useSelector(state => state.presentation);
@@ -72,7 +72,7 @@ const PresentationView = ({joinPresentation, leavePresentation, addSlideSocket, 
           </button>
           <div className="flex">
       <SlidesPanel addSlideSocket={addSlideSocket} deleteSlideSocket={deleteSlideSocket} />
-      <SlideWorkspace />
+      <SlideEditor addTextBlock={addTextBlock} updateTextBlock={updateTextBlock} moveTextBlock={moveTextBlock} deleteTextBlock={deleteTextBlock} />
       <UsersPanel changeUserRoleSocket={changeUserRoleSocket} />
       </div>
     </div>

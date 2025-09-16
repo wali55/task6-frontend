@@ -8,6 +8,10 @@ import {
   slideAdded,
   slideDeleted,
   roleChanged,
+  textBlockAdded,
+  textBlockUpdated,
+  textBlockDeleted,
+  textBlockMoved,
 } from "../store/slices/presentationSlice";
 import { initSocket } from "../utils/socket";
 
@@ -27,6 +31,10 @@ export const useSocket = () => {
     const handleSlideAdded = (data) => dispatch(slideAdded(data));
     const handleSlideDeleted = (data) => dispatch(slideDeleted(data));
     const handleRoleChanged = (data) => dispatch(roleChanged(data));
+    const handleTextBlockAdded = (data) => dispatch(textBlockAdded(data));
+    const handleTextBlockUpdated = (data) => dispatch(textBlockUpdated(data));
+    const handleTextBlockDeleted = (data) => dispatch(textBlockDeleted(data));
+    const handleTextBlockMoved = (data) => dispatch(textBlockMoved(data));
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
@@ -36,6 +44,10 @@ export const useSocket = () => {
     socket.on("slide-added", handleSlideAdded);
     socket.on("slide-deleted", handleSlideDeleted);
     socket.on("role-changed", handleRoleChanged);
+    socket.on("text-block-added", handleTextBlockAdded);
+    socket.on("text-block-updated", handleTextBlockUpdated);
+    socket.on("text-block-deleted", handleTextBlockDeleted);
+    socket.on("text-block-moved", handleTextBlockMoved);
 
     return () => {
       socket.off("connect", handleConnect);
@@ -46,6 +58,10 @@ export const useSocket = () => {
       socket.off("slide-added", handleSlideAdded);
       socket.off("slide-deleted", handleSlideDeleted);
       socket.off("role-changed", handleRoleChanged);
+      socket.off("text-block-added", handleTextBlockAdded);
+      socket.off("text-block-updated", handleTextBlockUpdated);
+      socket.off("text-block-deleted", handleTextBlockDeleted);
+      socket.off("text-block-moved", handleTextBlockMoved);
     };
   }, [dispatch]);
 
@@ -86,6 +102,45 @@ export const useSocket = () => {
     });
   };
 
+  const addTextBlock = useCallback(
+    (presentationId, slideId, textBlock) => {
+      socket?.emit("add-text-block", { presentationId, slideId, textBlock });
+    },
+    [socket]
+  );
+
+  const updateTextBlock = useCallback(
+    (presentationId, slideId, blockId, updates) => {
+      socket?.emit("update-text-block", {
+        presentationId,
+        slideId,
+        blockId,
+        updates,
+      });
+    },
+    [socket]
+  );
+
+  const deleteTextBlock = useCallback(
+    (presentationId, slideId, blockId) => {
+      socket?.emit("delete-text-block", { presentationId, slideId, blockId });
+    },
+    [socket]
+  );
+
+  const moveTextBlock = useCallback(
+    (presentationId, slideId, blockId, x, y) => {
+      socket?.emit("move-text-block", {
+        presentationId,
+        slideId,
+        blockId,
+        x,
+        y,
+      });
+    },
+    [socket]
+  );
+
   return {
     socket,
     joinPresentation,
@@ -93,5 +148,9 @@ export const useSocket = () => {
     addSlideSocket,
     deleteSlideSocket,
     changeUserRoleSocket,
+    addTextBlock,
+    updateTextBlock,
+    deleteTextBlock,
+    moveTextBlock,
   };
 };

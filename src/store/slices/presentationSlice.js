@@ -48,7 +48,7 @@ export const deleteSlide = createAsyncThunk(
   async ({ presentationId, slideId, userId }, { rejectWithValue }) => {
     try {
       await api.delete(`/slides/${presentationId}/slides/${slideId}`, {
-        data: { userId }
+        data: { userId },
       });
       return { slideId };
     } catch (error) {
@@ -61,12 +61,18 @@ export const deleteSlide = createAsyncThunk(
 
 export const changeUserRole = createAsyncThunk(
   "presentation/changeUserRole",
-  async ({ presentationId, targetUserId, role, userId }, { rejectWithValue }) => {
+  async (
+    { presentationId, targetUserId, role, userId },
+    { rejectWithValue }
+  ) => {
     try {
-      const res = await api.put(`/presentations/${presentationId}/users/${targetUserId}/role`, {
-        userId,
-        role
-      });
+      const res = await api.put(
+        `/presentations/${presentationId}/users/${targetUserId}/role`,
+        {
+          userId,
+          role,
+        }
+      );
       return res.data;
     } catch (error) {
       return rejectWithValue(
@@ -87,7 +93,10 @@ const presentationSlice = createSlice({
     presentations: [],
     loading: false,
     error: null,
-    showCreateForm: false
+    showCreateForm: false,
+    currentSlideIndex: 0,
+    selectedTextBlock: null,
+    isDragging: false,
   },
   reducers: {
     setCurrentPresentation: (state, action) => {
@@ -100,7 +109,7 @@ const presentationSlice = createSlice({
       state.activeUsers = action.payload;
     },
     setSlides: (state, action) => {
-      state.slides = action.payload;
+      state.slides = action.payload.slides;
     },
     setSelectedSlide: (state, action) => {
       state.selectedSlide = action.payload;
@@ -121,17 +130,113 @@ const presentationSlice = createSlice({
       state.slides.push(action.payload);
     },
     slideDeleted: (state, action) => {
-      state.slides = state.slides.filter(slide => slide.id !== action.payload.slideId);
+      state.slides = state.slides.filter(
+        (slide) => slide.id !== action.payload.slideId
+      );
       if (state.selectedSlide?.id === action.payload.slideId) {
         state.selectedSlide = state.slides[0] || null;
       }
     },
     roleChanged: (state, action) => {
-      const user = state.activeUsers.find(u => u.userId === action.payload.userId);
+      const user = state.activeUsers.find(
+        (u) => u.userId === action.payload.userId
+      );
       if (user) {
         user.role = action.payload.role;
       }
-    }
+    },
+    setCurrentSlide: (state, action) => {
+      state.currentSlideIndex = action.payload;
+    },
+    textBlockAdded: (state, action) => {
+      const { slideId, textBlock } = action.payload;
+      const slide = state.slides.find((s) => s.id === slideId);
+      if (slide) {
+        if (!slide.content) slide.content = { elements: [] };
+        slide.content.elements.push(textBlock);
+
+        if (state.selectedSlide?.id === slideId) {
+          state.selectedSlide = { ...slide };
+        }
+      }
+    },
+    textBlockDeleted: (state, action) => {
+      const { slideId, blockId } = action.payload;
+      const slide = state.slides.find((s) => s.id === slideId);
+      if (slide) {
+        slide.content.elements = slide.content.elements.filter(
+          (el) => el.id !== blockId
+        );
+      }
+
+      if (state.selectedSlide?.id === slideId) {
+        state.selectedSlide.content.elements =
+          state.selectedSlide.content.elements.filter(
+            (el) => el.id !== blockId
+          );
+      }
+
+      if (state.selectedTextBlock === blockId) {
+        state.selectedTextBlock = null;
+      }
+    },
+    textBlockUpdated: (state, action) => {
+      const { slideId, blockId, updates } = action.payload;
+
+      const slide = state.slides.find((s) => s.id === slideId);
+      if (slide) {
+        const blockIndex = slide.content?.elements?.findIndex(
+          (el) => el.id === blockId
+        );
+        if (blockIndex !== -1) {
+          slide.content.elements[blockIndex] = {
+            ...slide.content.elements[blockIndex],
+            ...updates,
+          };
+        }
+      }
+
+      if (state.selectedSlide?.id === slideId) {
+        const blockIndex = state.selectedSlide.content?.elements?.findIndex(
+          (el) => el.id === blockId
+        );
+        if (blockIndex !== -1) {
+          state.selectedSlide.content.elements[blockIndex] = {
+            ...state.selectedSlide.content.elements[blockIndex],
+            ...updates,
+          };
+        }
+      }
+    },
+
+    textBlockMoved: (state, action) => {
+      const { slideId, blockId, x, y } = action.payload;
+
+      const slide = state.slides.find((s) => s.id === slideId);
+      if (slide) {
+        const block = slide.content?.elements?.find((el) => el.id === blockId);
+        if (block) {
+          block.x = x;
+          block.y = y;
+        }
+      }
+
+      if (state.selectedSlide?.id === slideId) {
+        const block = state.selectedSlide.content?.elements?.find(
+          (el) => el.id === blockId
+        );
+        if (block) {
+          block.x = x;
+          block.y = y;
+        }
+      }
+    },
+    setSelectedTextBlock: (state, action) => {
+      state.selectedTextBlock = action.payload;
+    },
+    setDragging: (state, action) => {
+      state.isDragging = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -157,12 +262,14 @@ const presentationSlice = createSlice({
         state.showCreateForm = false;
       })
       .addCase(deleteSlide.fulfilled, (state, action) => {
-        state.slides = state.slides.filter(slide => slide.id !== action.payload.slideId);
+        state.slides = state.slides.filter(
+          (slide) => slide.id !== action.payload.slideId
+        );
         if (state.selectedSlide?.id === action.payload.slideId) {
           state.selectedSlide = state.slides[0] || null;
         }
       });
-  }
+  },
 });
 
 export const {
@@ -177,7 +284,14 @@ export const {
   userLeftPresentation,
   slideAdded,
   slideDeleted,
-  roleChanged
+  roleChanged,
+  setCurrentSlide,
+  textBlockAdded,
+  textBlockUpdated,
+  textBlockDeleted,
+  textBlockMoved,
+  setSelectedTextBlock,
+  setDragging,
 } = presentationSlice.actions;
 
 export default presentationSlice.reducer;
